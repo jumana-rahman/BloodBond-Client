@@ -41,13 +41,13 @@ export default function Navbar() {
           <Image
                 src="/logo.png"
                 alt="BloodBond"
-                width={180}
+                width={100}
                 height={50}
                 priority
-                className="h-12 w-auto"
+                className="h-10 w-auto"
             />
           <span className="text-xl font-bold text-gray-800">
-            BloodBond
+            Blood<span className="text-[#C62828]">Bond</span>
           </span>
         </Link>
 
