@@ -79,7 +79,7 @@ export default function Banner() {
               <CirclePlus size={18} />
               Join as Donor
 
-              <span className="absolute inset-0 rounded-full bg-white opacity-0 group-hover:opacity-20 transition" />
+              <span className="absolute inset-0 rounded-full bg-white opacity-0 group-hover:opacity-0 transition" />
             </Link>
 
             {/* SECONDARY CTA */}
