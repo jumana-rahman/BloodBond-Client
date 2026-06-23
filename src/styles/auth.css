@@ -1,0 +1,46 @@
+.input-group {
+  position: relative;
+  width: 100%;
+}
+
+.input-field {
+  width: 100%;
+  border: 2px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fff;
+  padding: 16px;
+  font-size: 15px;
+  color: #222;
+  transition: .25s;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #C62828;
+  box-shadow: 0 0 0 4px rgba(198,40,40,.12);
+}
+
+.input-label {
+  position: absolute;
+  left: 15px;
+  top: 16px;
+  background: white;
+  padding: 0 6px;
+  color: #777;
+  pointer-events: none;
+  transition: .2s;
+}
+
+.input-field:focus+.input-label,
+.input-field:not(:placeholder-shown)+.input-label,
+select:valid+.input-label {
+  top: -10px;
+  font-size: 13px;
+  color: #C62828;
+}
+
+.error-text{
+    color:#dc2626;
+    font-size:13px;
+    margin-top:6px;
+}
