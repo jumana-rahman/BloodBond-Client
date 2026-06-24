@@ -1,6 +1,6 @@
 "use client";
 
-export default function DashboardNavbar() {
+export default function DashboardNavbar({user}) {
   return (
     <header className="h-20 bg-white border-b flex items-center justify-between px-8">
       <div>
@@ -9,13 +9,13 @@ export default function DashboardNavbar() {
         </h2>
 
         <p className="text-gray-500">
-          Welcome back 👋
+          Welcome back, {user.name}
         </p>
       </div>
 
       <div className="flex items-center gap-4">
         <div className="w-11 h-11 rounded-full bg-red-500 text-white flex items-center justify-center font-bold">
-          J
+          {user.image}
         </div>
       </div>
     </header>
