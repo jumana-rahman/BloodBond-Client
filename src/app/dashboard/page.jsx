@@ -3,41 +3,53 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Chip } from "@heroui/react";
-import { Eye, Trash, Pencil } from "@gravity-ui/icons";
+import { Eye, Trash, Pencil, Person, FileText, Activity } from "@gravity-ui/icons";
 import { toast } from "react-toastify";
 import { authClient } from "@/lib/auth-client";
-import { protectedFetch, serverMutation } from "@/lib/server";
+import { protectedFetch, serverMutation } from "@/lib/core/server";
 
 export default function DashboardHome() {
   const { data: session } = authClient.useSession();
+  const userRole = session?.user?.role || "donor";
+
+  // State frameworks
   const [requests, setRequests] = useState([]);
+  const [stats, setStats] = useState({ totalRequests: 0, pendingRequests: 0, activeDonors: 0 });
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState(null);
 
-  // Fetch only the top 3 maximum recent donation requests created by this donor
-  const fetchRecentRequests = async () => {
+  // Unified dynamic loading workflow based on active session role
+  const loadDashboardData = async () => {
     try {
-      const data = await protectedFetch("/api/my-donation-requests?limit=3&page=1");
-      setRequests(data.requests || []);
+      if (userRole === "donor") {
+        const data = await protectedFetch("/api/my-donation-requests?limit=3&page=1");
+        setRequests(data.requests || []);
+      } else {
+        // Shared analytic endpoint for privileged roles (Admin & Volunteer)
+        const statData = await protectedFetch("/api/admin-volunteer/stats");
+        if (statData) setStats(statData);
+      }
     } catch (err) {
       console.error(err);
-      toast.error("Failed to fetch historical database entries.");
+      toast.error("Failed to sync platform metrics database entries.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchRecentRequests();
-  }, []);
+    if (session?.user) {
+      loadDashboardData();
+    }
+  }, [session, userRole]);
 
   const handleUpdateStatus = async (id, targetStatus) => {
     setActionLoading(true);
     try {
       await serverMutation(`/api/donation-requests/${id}/status`, { status: targetStatus }, "PATCH");
       toast.success(`Request status updated to ${targetStatus}`);
-      fetchRecentRequests();
+      loadDashboardData();
     } catch (err) {
       toast.error("Status migration rejected by backend parameters.");
     } finally {
@@ -52,7 +64,7 @@ export default function DashboardHome() {
       await serverMutation(`/api/donation-requests/${deleteTargetId}`, {}, "DELETE");
       toast.success("Query purged from registry workflows successfully.");
       setDeleteTargetId(null);
-      fetchRecentRequests();
+      loadDashboardData();
     } catch (err) {
       toast.error("Deletion pipeline encountered failure error.");
     } finally {
@@ -79,156 +91,169 @@ export default function DashboardHome() {
   return (
     <div className="space-y-8 animate-fade-in">
       
-      {/* Welcome Message Section displaying user's logged-in name */}
-      <div className="bg-white p-6 md:p-8 rounded-3xl border border-gray-100 shadow-sm">
-        <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">
-          Welcome back, {session?.user?.name || "Donor Workspace"}
-        </h1>
-        <p className="text-xs text-gray-500 mt-1 uppercase tracking-wider font-semibold">
-          System Access Node: {session?.user?.email}
-        </p>
+      {/* Dynamic Welcome Message Section */}
+      <div className="bg-white p-6 md:p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">
+            Welcome back, {session?.user?.name || "User Workspace"}
+          </h1>
+          <p className="text-xs text-gray-500 mt-1 uppercase tracking-wider font-semibold">
+            System Access Node: {session?.user?.email}
+          </p>
+        </div>
+        <Chip variant="flat" color="danger" className="font-bold text-xs uppercase tracking-wider px-3 py-1">
+          Role: {userRole}
+        </Chip>
       </div>
 
-      {/* Hidden Section Rule: If the user has not made any donation request yet, this section will be hidden */}
-      {requests.length > 0 && (
-        <div className="space-y-4">
-          <div>
-            <h2 className="text-lg font-black text-gray-900 tracking-tight">
-              Recent Donation Requests
-            </h2>
-            <p className="text-xs text-gray-400">
-              Your maximum 3 most recent blood requisition instances.
-            </p>
-          </div>
+      {/* VIEW A: DONOR WORKSPACE VIEW */}
+      {userRole === "donor" && (
+        <>
+          {requests.length > 0 ? (
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-lg font-black text-gray-900 tracking-tight">
+                  Recent Donation Requests
+                </h2>
+                <p className="text-xs text-gray-400">
+                  Your maximum 3 most recent blood requisition instances.
+                </p>
+              </div>
 
-          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <Table aria-label="Recent Requests Tabular View" removeWrapper shadow="none" className="min-w-full">
-                <TableHeader>
-                  <TableColumn className="font-bold text-xs">RECIPIENT NAME</TableColumn>
-                  <TableColumn className="font-bold text-xs">RECIPIENT LOCATION</TableColumn>
-                  <TableColumn className="font-bold text-xs">DONATION DATE</TableColumn>
-                  <TableColumn className="font-bold text-xs">DONATION TIME</TableColumn>
-                  <TableColumn className="font-bold text-xs">BLOOD GROUP</TableColumn>
-                  <TableColumn className="font-bold text-xs">DONATION STATUS</TableColumn>
-                  <TableColumn className="font-bold text-xs text-center">CONTROLS</TableColumn>
-                </TableHeader>
-                <TableBody>
-                  {requests.map((req) => (
-                    <TableRow key={req._id} className="border-b border-gray-50 hover:bg-gray-50/40 transition-colors">
-                      
-                      {/* Recipient Name Column with Donor Info display when 'inprogress' */}
-                      <TableCell>
-                        <div className="font-bold text-gray-900 text-sm">{req.recipientName}</div>
-                        {req.status === "inprogress" && req.donorInfo && (
-                          <div className="text-[11px] text-blue-800 bg-blue-50 border border-blue-100 px-2 py-1 rounded-lg mt-1 font-medium max-w-xs">
-                            <span className="font-bold">Donor:</span> {req.donorInfo.name} ({req.donorInfo.email})
-                          </div>
-                        )}
-                      </TableCell>
-
-                      {/* Recipient Location Column showing only district and upazila */}
-                      <TableCell className="text-sm font-semibold text-gray-600">
-                        {req.recipientUpazila}, {req.recipientDistrict}
-                      </TableCell>
-
-                      {/* Donation Date Column */}
-                      <TableCell className="text-sm font-bold text-gray-700">
-                        {req.donationDate}
-                      </TableCell>
-
-                      {/* Donation Time Column */}
-                      <TableCell className="text-sm font-medium text-gray-500">
-                        {req.donationTime}
-                      </TableCell>
-
-                      {/* Blood Group Column */}
-                      <TableCell>
-                        <Chip size="sm" variant="flat" color="danger" className="font-extrabold text-xs">
-                          {req.bloodGroup}
-                        </Chip>
-                      </TableCell>
-
-                      {/* Donation Status Column */}
-                      <TableCell>
-                        <Chip variant="dot" color={statusColorMap[req.status]} className="capitalize font-bold text-xs">
-                          {req.status}
-                        </Chip>
-                      </TableCell>
-
-                      {/* Controls Management Column */}
-                      <TableCell>
-                        <div className="flex items-center justify-center gap-2">
-                          
-                          {/* Done and Cancel toggle switches are visible ONLY while status is inprogress */}
-                          {req.status === "inprogress" && (
-                            <>
-                              <button
-                                disabled={actionLoading}
-                                onClick={() => handleUpdateStatus(req._id, "done")}
-                                className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition-colors disabled:opacity-50"
+              <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <Table aria-label="Recent Requests Tabular View" removeWrapper shadow="none" className="min-w-full">
+                    <TableHeader>
+                      <TableColumn className="font-bold text-xs">RECIPIENT NAME</TableColumn>
+                      <TableColumn className="font-bold text-xs">RECIPIENT LOCATION</TableColumn>
+                      <TableColumn className="font-bold text-xs">DONATION DATE</TableColumn>
+                      <TableColumn className="font-bold text-xs">DONATION TIME</TableColumn>
+                      <TableColumn className="font-bold text-xs">BLOOD GROUP</TableColumn>
+                      <TableColumn className="font-bold text-xs">DONATION STATUS</TableColumn>
+                      <TableColumn className="font-bold text-xs text-center">CONTROLS</TableColumn>
+                    </TableHeader>
+                    <TableBody>
+                      {requests.map((req) => (
+                        <TableRow key={req._id} className="border-b border-gray-50 hover:bg-gray-50/40 transition-colors">
+                          <TableCell>
+                            <div className="font-bold text-gray-900 text-sm">{req.recipientName}</div>
+                            {req.status === "inprogress" && req.donorInfo && (
+                              <div className="text-[11px] text-blue-800 bg-blue-50 border border-blue-100 px-2 py-1 rounded-lg mt-1 font-medium max-w-xs">
+                                <span className="font-bold">Donor:</span> {req.donorInfo.name} ({req.donorInfo.email})
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-sm font-semibold text-gray-600">
+                            {req.recipientUpazila}, {req.recipientDistrict}
+                          </TableCell>
+                          <TableCell className="text-sm font-bold text-gray-700">{req.donationDate}</TableCell>
+                          <TableCell className="text-sm font-medium text-gray-500">{req.donationTime}</TableCell>
+                          <TableCell>
+                            <Chip size="sm" variant="flat" color="danger" className="font-extrabold text-xs">
+                              {req.bloodGroup}
+                            </Chip>
+                          </TableCell>
+                          <TableCell>
+                            <Chip variant="dot" color={statusColorMap[req.status]} className="capitalize font-bold text-xs">
+                              {req.status}
+                            </Chip>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center justify-center gap-2">
+                              {req.status === "inprogress" && (
+                                <>
+                                  <button
+                                    disabled={actionLoading}
+                                    onClick={() => handleUpdateStatus(req._id, "done")}
+                                    className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition-colors disabled:opacity-50"
+                                  >
+                                    Done
+                                  </button>
+                                  <button
+                                    disabled={actionLoading}
+                                    onClick={() => handleUpdateStatus(req._id, "canceled")}
+                                    className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-xl transition-colors disabled:opacity-50"
+                                  >
+                                    Cancel
+                                  </button>
+                                </>
+                              )}
+                              <Link
+                                href={`/dashboard/my-donation-requests/edit/${req._id}`}
+                                className="p-2 hover:bg-amber-50 text-amber-600 rounded-xl transition-colors flex items-center justify-center"
+                                title="Edit Requisition"
                               >
-                                Done
-                              </button>
+                                <Pencil className="w-4 h-4" />
+                              </Link>
                               <button
-                                disabled={actionLoading}
-                                onClick={() => handleUpdateStatus(req._id, "canceled")}
-                                className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-xl transition-colors disabled:opacity-50"
+                                onClick={() => setDeleteTargetId(req._id)}
+                                className="p-2 hover:bg-rose-50 text-rose-600 rounded-xl transition-colors flex items-center justify-center"
+                                title="Delete Request"
                               >
-                                Cancel
+                                <Trash className="w-4 h-4" />
                               </button>
-                            </>
-                          )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
 
-                          {/* View Button */}
-                          <Link
-                            href={`/dashboard/my-donation-requests/details/${req._id}`}
-                            className="p-2 hover:bg-gray-100 text-gray-500 rounded-xl transition-colors flex items-center justify-center"
-                            title="View Details"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Link>
+              <div className="flex justify-start pt-2">
+                <Link
+                  href="/dashboard/my-donation-requests"
+                  className="px-5 py-3 border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-bold text-xs rounded-xl transition-all shadow-sm inline-block"
+                >
+                  View My All Request
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-white rounded-3xl border border-gray-100 shadow-sm">
+              <p className="text-sm font-bold text-gray-400 uppercase tracking-wider">No history records found.</p>
+            </div>
+          )}
+        </>
+      )}
 
-                          {/* Edit Button redirection */}
-                          <Link
-                            href={`/dashboard/my-donation-requests/edit/${req._id}`}
-                            className="p-2 hover:bg-amber-50 text-amber-600 rounded-xl transition-colors flex items-center justify-center"
-                            title="Edit Requisition"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Link>
-
-                          {/* Delete Button with structural state handler assignment */}
-                          <button
-                            onClick={() => setDeleteTargetId(req._id)}
-                            className="p-2 hover:bg-rose-50 text-rose-600 rounded-xl transition-colors flex items-center justify-center"
-                            title="Delete Request"
-                          >
-                            <Trash className="w-4 h-4" />
-                          </button>
-
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+      {/* VIEW B: PRIVILEGED OPERATIONS SUMMARY VIEW (Admin & Volunteer) */}
+      {userRole !== "donor" && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center gap-4">
+            <div className="p-3 bg-red-50 text-red-700 rounded-xl">
+              <FileText className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-xl font-black text-gray-900">{stats.totalRequests}</div>
+              <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total Requisitions</div>
             </div>
           </div>
 
-          {/* View My All Request Navigation Link Button */}
-          <div className="flex justify-start pt-2">
-            <Link
-              href="/dashboard/my-donation-requests"
-              className="px-5 py-3 border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-bold text-xs rounded-xl transition-all shadow-sm inline-block"
-            >
-              View My All Request
-            </Link>
+          <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center gap-4">
+            <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
+              <Activity className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-xl font-black text-gray-900">{stats.pendingRequests}</div>
+              <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Pending Pool</div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center gap-4">
+            <div className="p-3 bg-blue-50 text-blue-700 rounded-xl">
+              <Person className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-xl font-black text-gray-900">{stats.activeDonors}</div>
+              <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Active Personnel</div>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Confirmation Safeguard Backdrop Box Overlay */}
+      {/* Confirmation Safeguard Modal Box Backdrop */}
       {deleteTargetId && (
         <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-gray-100 space-y-4 animate-scale-up">

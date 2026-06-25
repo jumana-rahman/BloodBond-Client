@@ -33,7 +33,7 @@ export default function DashboardLayout({ children }) {
       case "volunteer":
         return [
           ...commonLinks,
-          { name: "All Blood Requests", href: "/dashboard/all-requests", icon: <GiBlood className="w-4 h-4 text-red-600" /> },
+          { name: "All Blood Requests", href: "/dashboard/all-blood-donation-request", icon: <GiBlood className="w-4 h-4 text-red-600" /> },
         ];
       case "donor":
       default:
