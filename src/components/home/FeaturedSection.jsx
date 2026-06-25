@@ -2,9 +2,28 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Card, CardBody, Avatar } from "@heroui/react";
+import { Card, CardBody, Avatar, Chip } from "@heroui/react";
 import { Activity, Flame, ShieldCheck, Heart, HeartFill, Users, MapPin, ArrowRight } from "@gravity-ui/icons";
-import { protectedFetch } from "@/lib/core/server";
+import { motion } from "framer-motion";
+import { protectedFetch } from "@/lib/server";
+
+// Stagger & Motion Animation Variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.12, delayChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 24 },
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { type: "spring", stiffness: 100, damping: 15 } 
+  }
+};
 
 export default function FeaturedSection() {
   const [pulseData, setPulseData] = useState({
@@ -17,12 +36,11 @@ export default function FeaturedSection() {
   useEffect(() => {
     async function loadPulseMetrics() {
       try {
-        // Fetches curated urgent metrics specifically for the landing spotlight section
         const data = await protectedFetch("/api/public/landing-pulse");
         if (data) setPulseData(data);
       } catch (err) {
         console.error("Landing showcase failure:", err);
-        // Seamless fallback fallback mock matrices if the backend pipe is warming up
+        // Fallback production data if server node is connecting
         setPulseData({
           activeUrgentRequests: [
             { _id: "1", recipientName: "Rahat Karim", bloodGroup: "O-", hospitalName: "Dhaka Medical College", urgency: "Critical" },
@@ -45,30 +63,45 @@ export default function FeaturedSection() {
   return (
     <section className="py-20 bg-gradient-to-b from-white via-gray-50/50 to-white overflow-hidden relative">
       
-      {/* Dynamic Aesthetic Background Ambient Elements */}
+      {/* Glow Backing Blur Layers */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-red-500/5 blur-[140px] rounded-full pointer-events-none" />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16 relative z-10">
         
-        {/* Modern Minimalistic Glowing Header Section */}
-        <div className="text-center space-y-4 max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-2 bg-red-50 border border-red-100 px-3 py-1 rounded-full text-red-700 text-xs font-black uppercase tracking-widest animate-pulse">
-            <Activity className="w-3.5 h-3.5" />
+        {/* Animated Headline Header Block */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="text-center space-y-4 max-w-2xl mx-auto"
+        >
+          <div className="inline-flex items-center gap-2 bg-red-50 border border-red-100 px-3 py-1 rounded-full text-red-700 text-xs font-black uppercase tracking-widest">
+            <Activity className="w-3.5 h-3.5 animate-pulse text-red-600" />
             Live Network Pulse
           </div>
           <h2 className="text-3xl sm:text-5xl font-black text-gray-900 tracking-tight leading-none">
-            Minutes Matter. <br/><span className="text-red-700 bg-clip-text">Bridging the Gap Instantly.</span>
+            Minutes Matter. <br/><span className="text-red-700">Bridging the Gap Instantly.</span>
           </h2>
           <p className="text-sm sm:text-base text-gray-400 font-medium leading-relaxed max-w-xl mx-auto">
             Our autonomous routing platform matches real-time local emergency requests directly with active nearby blood donors. Here is how the community is responding right now.
           </p>
-        </div>
+        </motion.div>
 
-        {/* Core Showcase Grid Structure */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+        {/* Core Showcase Responsive Multi-Grid */}
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch"
+        >
           
-          {/* COLUMN 1 (Left 7-Slots wide): Interactive Emergency Alert Board */}
-          <div className="lg:col-span-7 flex flex-col justify-between space-y-4 bg-white border border-gray-100 rounded-[32px] p-6 sm:p-8 shadow-sm">
+          {/* PANEL 1: Interactive Emergency Bulletin Alerts Board */}
+          <motion.div 
+            variants={itemVariants}
+            className="lg:col-span-7 flex flex-col justify-between space-y-4 bg-white border border-gray-100 rounded-[32px] p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow duration-300"
+          >
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-black text-gray-900 tracking-tight flex items-center gap-2">
@@ -82,9 +115,10 @@ export default function FeaturedSection() {
 
             <div className="space-y-4 my-4 flex-1 justify-center flex flex-col">
               {pulseData.activeUrgentRequests.map((req) => (
-                <div 
+                <motion.div 
                   key={req._id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 hover:bg-red-50/20 border border-gray-100 hover:border-red-100 rounded-2xl transition-all duration-300 gap-4 group"
+                  whileHover={{ scale: 1.015, x: 4 }}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 border border-gray-100 hover:border-red-100 hover:bg-red-50/10 rounded-2xl transition-all duration-200 gap-4 group"
                 >
                   <div className="flex items-start gap-3.5">
                     <div className="w-12 h-12 rounded-xl bg-red-700 font-black text-white text-base flex items-center justify-center shadow-md shadow-red-700/10 shrink-0">
@@ -106,52 +140,57 @@ export default function FeaturedSection() {
                   
                   <Link
                     href={`/donation-requests/${req._id}`}
-                    className="h-9 px-4 bg-gray-900 hover:bg-red-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all self-start sm:self-center shrink-0"
+                    className="h-9 px-4 bg-gray-900 hover:bg-red-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all self-start sm:self-center shrink-0 shadow-sm"
                   >
                     Respond
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
-                </div>
+                </motion.div>
               ))}
             </div>
 
             <Link 
               href="/donation-requests" 
-              className="text-xs font-black text-gray-900 hover:text-red-700 flex items-center gap-1.5 transition-colors pt-2 group"
+              className="text-xs font-black text-gray-900 hover:text-red-700 flex items-center gap-1.5 transition-colors pt-2 group w-fit"
             >
               Scan all open pending requests
               <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
             </Link>
-          </div>
+          </motion.div>
 
-          {/* COLUMN 2 (Right 5-Slots wide): Real-time Impact and Activity Ticker */}
+          {/* PANEL 2 & 3 CONTAINER BLOCK (Right column layout tracks) */}
           <div className="lg:col-span-5 flex flex-col gap-6">
             
-            {/* Upper Box: Live Impact Metrics Count Card */}
-            <Card shadow="none" className="bg-gray-900 border border-gray-800 rounded-[32px] p-6 text-white relative overflow-hidden flex-1 flex flex-col justify-center">
-              <div className="absolute top-0 right-0 p-8 text-gray-800 opacity-20 pointer-events-none">
-                <HeartFill className="w-32 h-32" />
-              </div>
-              <CardBody className="p-0 space-y-4 relative z-10">
-                <div className="p-2.5 bg-white/5 border border-white/10 text-red-500 rounded-xl w-fit">
-                  <Heart className="w-5 h-5" />
+            {/* Upper Metric Box: System Analytics Tracking Block */}
+            <motion.div variants={itemVariants} className="flex-1 flex flex-col">
+              <Card shadow="none" className="bg-gray-900 border border-gray-800 rounded-[32px] p-6 text-white relative overflow-hidden flex-1 flex flex-col justify-center group">
+                <div className="absolute top-0 right-0 p-6 text-gray-800 opacity-20 pointer-events-none transition-transform duration-700 group-hover:scale-110 group-hover:rotate-6">
+                  <HeartFill className="w-36 h-36" />
                 </div>
-                <div className="space-y-1">
-                  <div className="text-4xl sm:text-5xl font-black tracking-tight text-white">
-                    {pulseData.impactMetrics.lifeSavedEstimate}+
+                <CardBody className="p-0 space-y-4 relative z-10">
+                  <div className="p-2.5 bg-white/5 border border-white/10 text-red-500 rounded-xl w-fit">
+                    <Heart className="w-5 h-5" />
                   </div>
-                  <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                    System Lives Sustained
+                  <div className="space-y-1">
+                    <div className="text-4xl sm:text-5xl font-black tracking-tight text-white">
+                      {pulseData.impactMetrics.lifeSavedEstimate}+
+                    </div>
+                    <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                      System Lives Sustained
+                    </div>
                   </div>
-                </div>
-                <p className="text-xs font-medium text-gray-400 leading-relaxed">
-                  Every transaction ledger confirms critical allocation stability. Today alone, <span className="text-emerald-400 font-bold">{pulseData.impactMetrics.criticalMatchesToday} emergency requests</span> found successful matches.
-                </p>
-              </CardBody>
-            </Card>
+                  <p className="text-xs font-medium text-gray-400 leading-relaxed">
+                    Every transaction ledger confirms critical allocation stability. Today alone, <span className="text-emerald-400 font-bold">{pulseData.impactMetrics.criticalMatchesToday} emergency requests</span> found successful matches.
+                  </p>
+                </CardBody>
+              </Card>
+            </motion.div>
 
-            {/* Lower Box: Live Community Donors Stream Feed */}
-            <div className="bg-white border border-gray-100 rounded-[32px] p-6 shadow-sm flex flex-col justify-between space-y-4">
+            {/* Lower List Box: Active Recent Contributor Stream */}
+            <motion.div 
+              variants={itemVariants}
+              className="bg-white border border-gray-100 rounded-[32px] p-6 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow duration-300"
+            >
               <div className="space-y-1">
                 <h4 className="text-sm font-black text-gray-900 tracking-tight flex items-center gap-1.5">
                   <Users className="text-gray-400 w-4 h-4" />
@@ -160,7 +199,6 @@ export default function FeaturedSection() {
                 <p className="text-[11px] text-gray-400">Newly added heroes stepping into operational standby status.</p>
               </div>
 
-              {/* Contributor List Stream Elements */}
               <div className="flex flex-col gap-3">
                 {pulseData.recentDonors.map((donor) => (
                   <div key={donor.id} className="flex items-center justify-between text-xs border-b border-gray-50 pb-2.5 last:border-none last:pb-0">
@@ -181,17 +219,15 @@ export default function FeaturedSection() {
                 ))}
               </div>
 
-              {/* Network Security Compliance Banner */}
               <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-xl p-2.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
                 PCI-DSS Security Protocol Mask Active
               </div>
-
-            </div>
+            </motion.div>
 
           </div>
 
-        </div>
+        </motion.div>
 
       </div>
     </section>
