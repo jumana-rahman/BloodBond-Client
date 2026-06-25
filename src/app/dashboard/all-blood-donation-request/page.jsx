@@ -6,7 +6,7 @@ import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Chip }
 import { Funnel, CircleCheck, Pencil, Trash } from "@gravity-ui/icons";
 import { toast } from "react-toastify";
 import { authClient } from "@/lib/auth-client";
-import { protectedFetch, serverMutation } from "@/lib/server";
+import { protectedFetch, serverMutation } from "@/lib/core/server";
 
 export default function AllBloodDonationRequests() {
   const { data: session } = authClient.useSession();

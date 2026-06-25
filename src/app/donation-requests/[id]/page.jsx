@@ -2,8 +2,8 @@
 
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
-import { Chip, Card, CardBody } from "@heroui/react";
-import { ArrowLeft, Calendar, Clock, MapPin, Person, Phone, Heart, FileText } from "@gravity-ui/icons";
+import { Chip, Card, CardBody, Input } from "@heroui/react";
+import { ArrowLeft, Calendar, Clock, MapPin, Person, Heart, FileText, Mail } from "@gravity-ui/icons";
 import { toast } from "react-toastify";
 import { authClient } from "@/lib/auth-client";
 import { protectedFetch, serverMutation } from "@/lib/core/server";
@@ -16,6 +16,7 @@ export default function PrivateDonationRequestDetails({ params }) {
   const [request, setRequest] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (!isPending && !session) {
@@ -43,14 +44,21 @@ export default function PrivateDonationRequestDetails({ params }) {
     }
   };
 
-  const handleDonateAction = async () => {
+  const handleConfirmDonation = async (e) => {
+    e.preventDefault();
     setActionLoading(true);
     try {
-      await serverMutation(`/api/donation-requests/${unwrappedParams.id}/accept`, {}, "POST");
-      toast.success("Donor allocation assigned. Requisition changed to In Progress.");
+      // Fires the server allocation protocol to move the request from pending to inprogress
+      await serverMutation(`/api/donation-requests/${unwrappedParams.id}/accept`, {
+        donorName: session?.user?.name,
+        donorEmail: session?.user?.email
+      }, "POST");
+      
+      toast.success("Donation confirmed successfully! Requisition changed to In Progress.");
+      setIsModalOpen(false);
       router.push("/dashboard/my-donation-requests");
     } catch (err) {
-      toast.error("Allocation protocol rejected by server clusters.");
+      toast.error("Donation allocation protocol rejected by server clusters.");
     } finally {
       setActionLoading(false);
     }
@@ -98,7 +106,7 @@ export default function PrivateDonationRequestDetails({ params }) {
             </Chip>
           </div>
 
-          {/* Core Structured Field Information Block */}
+          {/* Core Structured Field Information Block containing all request form variables */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             
             <div className="space-y-1">
@@ -147,17 +155,84 @@ export default function PrivateDonationRequestDetails({ params }) {
             <div className="pt-4 border-t border-gray-50 flex flex-col sm:flex-row gap-3">
               <button
                 disabled={actionLoading}
-                onClick={handleDonateAction}
+                onClick={() => setIsModalOpen(true)}
                 className="flex-1 h-12 bg-red-700 hover:bg-red-800 text-white font-bold text-xs rounded-xl shadow-md transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <Heart className="w-4 h-4" />
-                Accept Allocation Requisition
+                Donate
               </button>
             </div>
           )}
 
         </CardBody>
       </Card>
+
+      {/* Confirmation Donation Form Modal Backdrop Box Overlay */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-xl border border-gray-100 space-y-4 animate-scale-up">
+            
+            <div>
+              <h4 className="text-lg font-black text-gray-900 tracking-tight">Confirm Donation Assignment</h4>
+              <p className="text-xs text-gray-400 mt-0.5">Please review your verification metrics credentials below before committing to this requisition workflow.</p>
+            </div>
+
+            <form onSubmit={handleConfirmDonation} className="space-y-4 pt-2">
+              
+              {/* Donor Name (Read-Only) */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Donor Name Identity</label>
+                <Input
+                  type="text"
+                  value={session?.user?.name || ""}
+                  readOnly
+                  disabled
+                  radius="xl"
+                  variant="flat"
+                  startContent={<Person className="text-gray-400 w-4 h-4 mr-1" />}
+                  className="font-bold text-gray-700 text-sm"
+                />
+              </div>
+
+              {/* Donor Email (Read-Only) */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Donor Email Address</label>
+                <Input
+                  type="email"
+                  value={session?.user?.email || ""}
+                  readOnly
+                  disabled
+                  radius="xl"
+                  variant="flat"
+                  startContent={<Mail className="text-gray-400 w-4 h-4 mr-1" />}
+                  className="font-bold text-gray-700 text-sm"
+                />
+              </div>
+
+              {/* Form Actions Buttons Grid */}
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  disabled={actionLoading}
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className="px-5 py-2.5 bg-red-700 hover:bg-red-800 text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center gap-1.5"
+                >
+                  Confirm Donation
+                </button>
+              </div>
+
+            </form>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -13,7 +13,7 @@ import {
 import { GiBlood } from "react-icons/gi";
 import { toast } from "react-toastify";
 import Link from "next/link";
-import { protectedFetch, serverMutation } from "@/lib/server";
+import { protectedFetch, serverMutation } from "@/lib/core/server";
 
 export default function MyDonationRequests() {
   // Pagination & Filter States

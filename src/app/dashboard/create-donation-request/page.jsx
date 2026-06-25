@@ -6,7 +6,7 @@ import { GiBlood } from "react-icons/gi";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
-import { serverMutation } from "@/lib/server";
+import { serverMutation } from "@/lib/core/server";
 
 export default function CreateDonationRequest() {
   const router = useRouter();
