@@ -221,35 +221,40 @@ export default function DashboardHome() {
       {/* VIEW B: PRIVILEGED OPERATIONS SUMMARY VIEW (Admin & Volunteer) */}
       {userRole !== "donor" && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center gap-4">
+          
+          {/* Card 1: Total Users (Donors) */}
+          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex items-center gap-4">
             <div className="p-3 bg-red-50 text-red-700 rounded-xl">
-              <FileText className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-xl font-black text-gray-900">{stats.totalRequests}</div>
-              <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total Requisitions</div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center gap-4">
-            <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
-              <Activity className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-xl font-black text-gray-900">{stats.pendingRequests}</div>
-              <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Pending Pool</div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center gap-4">
-            <div className="p-3 bg-blue-50 text-blue-700 rounded-xl">
               <Person className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-xl font-black text-gray-900">{stats.activeDonors}</div>
-              <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Active Personnel</div>
+              <div className="text-2xl font-black text-gray-900">{stats.totalDonors || 0}</div>
+              <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total Donors</div>
             </div>
           </div>
+
+          {/* Card 2: Total Funding */}
+          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex items-center gap-4">
+            <div className="p-3 bg-emerald-50 text-emerald-700 rounded-xl">
+              <CreditCard className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-2xl font-black text-gray-900">${stats.totalFunding || 0}</div>
+              <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total Funding</div>
+            </div>
+          </div>
+
+          {/* Card 3: Total Blood Donation Requests */}
+          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex items-center gap-4">
+            <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
+              <FileText className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-2xl font-black text-gray-900">{stats.totalRequests || 0}</div>
+              <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Donation Requests</div>
+            </div>
+          </div>
+
         </div>
       )}
 
