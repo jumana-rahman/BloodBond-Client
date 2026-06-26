@@ -6,7 +6,11 @@ import { GiBlood } from "react-icons/gi";
 import { toast } from "react-toastify";
 import { useRouter, useParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
-import { protectedFetch, serverMutation } from "@/lib/core/server";
+import { getDonationRequest } from "@/lib/api/donationRequests";
+
+import {
+  updateDonationRequest,
+} from "@/lib/actions/donationRequests";
 
 export default function EditDonationRequest() {
   const router = useRouter();
@@ -57,8 +61,8 @@ export default function EditDonationRequest() {
         setAllUpazilas(rawUpazilas);
 
         // Fetch targeting donation details from your Express routing instance
-        const response = await protectedFetch(`/api/donation-requests/${id}`);
-        const requestData = response?.request || response;
+        const requestData = await getDonationRequest(id);
+        // const requestData = response?.request || response;
 
         if (requestData) {
           setFormData({
@@ -119,7 +123,10 @@ export default function EditDonationRequest() {
 
     try {
       // Maps back directly to your Express route logic: PUT /api/donation-requests/:id
-      const result = await serverMutation(`/api/donation-requests/${id}`, formData, "PUT");
+      const result = await updateDonationRequest(
+          id,
+          formData
+      );
 
       if (result.success) {
         toast.success("Donation request modified successfully.");

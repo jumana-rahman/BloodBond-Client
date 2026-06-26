@@ -13,7 +13,11 @@ import {
 import { GiBlood } from "react-icons/gi";
 import { toast } from "react-toastify";
 import Link from "next/link";
-import { protectedFetch, serverMutation } from "@/lib/core/server";
+import { getMyDonationRequests } from "@/lib/api/donationRequests";
+import {
+  updateDonationRequestStatus,
+  deleteDonationRequest,
+} from "@/lib/actions/donationRequests";
 
 export default function MyDonationRequests() {
   // Pagination & Filter States
@@ -40,7 +44,11 @@ export default function MyDonationRequests() {
         queryPath += `&status=${statusFilter}`;
       }
 
-      const data = await protectedFetch(queryPath);
+      const data = await getMyDonationRequests(
+        currentPage,
+        limit,
+        statusFilter
+      );
       setRequests(data.requests || []);
       setTotalRequests(data.total || 0);
     } catch (err) {
@@ -54,7 +62,7 @@ export default function MyDonationRequests() {
   const handleUpdateStatus = async (id, targetStatus) => {
     setActionLoading(true);
     try {
-      await serverMutation(`/api/donation-requests/${id}/status`, { status: targetStatus }, "PATCH");
+      await updateDonationRequestStatus(id, targetStatus);
       toast.success(`Request status updated to ${targetStatus}.`);
       fetchRequests();
     } catch (err) {
@@ -68,7 +76,7 @@ export default function MyDonationRequests() {
     if (!deleteTargetId) return;
     setActionLoading(true);
     try {
-      await serverMutation(`/api/donation-requests/${deleteTargetId}`, {}, "DELETE");
+      await deleteDonationRequest(deleteTargetId);
       toast.success("Donation query deleted successfully.");
       setDeleteTargetId(null);
       fetchRequests();

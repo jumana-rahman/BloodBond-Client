@@ -6,7 +6,12 @@ import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Chip }
 import { Funnel, CircleCheck, Pencil, Trash } from "@gravity-ui/icons";
 import { toast } from "react-toastify";
 import { authClient } from "@/lib/auth-client";
-import { protectedFetch, serverMutation } from "@/lib/core/server";
+import { getAllDonationRequests } from "@/lib/api/admin";
+
+import {
+  updateDonationRequestStatus,
+  deleteDonationRequest,
+} from "@/lib/actions/donationRequests";
 
 export default function AllBloodDonationRequests() {
   const { data: session } = authClient.useSession();
@@ -36,7 +41,11 @@ export default function AllBloodDonationRequests() {
         queryPath += `&status=${statusFilter}`;
       }
       
-      const data = await protectedFetch(queryPath);
+      const data = await getAllDonationRequests({
+        page: currentPage,
+        limit,
+        status: statusFilter,
+      });
       setRequests(data.requests || []);
       setTotalRequests(data.total || 0);
     } catch (err) {
@@ -50,7 +59,7 @@ export default function AllBloodDonationRequests() {
   const handleUpdateStatus = async (id, targetStatus) => {
     setActionLoading(true);
     try {
-      await serverMutation(`/api/donation-requests/${id}/status`, { status: targetStatus }, "PATCH");
+      await updateDonationRequestStatus(id, targetStatus);
       toast.success(`Request status updated safely to ${targetStatus}`);
       fetchAllRequests();
     } catch (err) {
@@ -64,7 +73,7 @@ export default function AllBloodDonationRequests() {
     if (!deleteTargetId) return;
     setActionLoading(true);
     try {
-      await serverMutation(`/api/donation-requests/${deleteTargetId}`, {}, "DELETE");
+      await deleteDonationRequest(deleteTargetId);
       toast.success("Blood requisition cleared from database pools successfully.");
       setDeleteTargetId(null);
       fetchAllRequests();

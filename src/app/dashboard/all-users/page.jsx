@@ -4,7 +4,12 @@ import { useState, useEffect } from "react";
 import { Avatar, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Chip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button } from "@heroui/react";
 import { Funnel, Ellipsis, Shield, ShieldUser, Ban, Check } from "@gravity-ui/icons";
 import { toast } from "react-toastify";
-import { protectedFetch, serverMutation } from "@/lib/core/server";
+import { getAllUsers } from "@/lib/api/admin";
+
+import {
+  updateUserRole,
+  updateUserStatus,
+} from "@/lib/actions/admin";
 
 export default function AllUsersManagement() {
   const [users, setUsers] = useState([]);
@@ -15,12 +20,9 @@ export default function AllUsersManagement() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      let endpoint = "/api/users";
-      if (statusFilter) {
-        endpoint += `?status=${statusFilter}`;
-      }
-      const data = await protectedFetch(endpoint);
-      setUsers(data.users || []);
+      const data = await getAllUsers(statusFilter);
+
+      setUsers(data);
     } catch (err) {
       console.error(err);
       toast.error("Failed to sync system database user entries.");
@@ -37,7 +39,7 @@ export default function AllUsersManagement() {
     setActionLoading(true);
     const nextStatus = currentStatus === "active" ? "blocked" : "active";
     try {
-      await serverMutation(`/api/users/${userId}/status`, { status: nextStatus }, "PATCH");
+      await updateUserStatus(userId, nextStatus);
       toast.success(`User profile status configured to ${nextStatus}`);
       fetchUsers();
     } catch (err) {
@@ -50,7 +52,7 @@ export default function AllUsersManagement() {
   const handleUpdateRole = async (userId, nextRole) => {
     setActionLoading(true);
     try {
-      await serverMutation(`/api/users/${userId}/role`, { role: nextRole }, "PATCH");
+      await updateUserRole(userId, nextRole);
       toast.success(`User profile role adjusted to ${nextRole}`);
       fetchUsers();
     } catch (err) {

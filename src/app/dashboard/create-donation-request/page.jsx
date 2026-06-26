@@ -6,7 +6,7 @@ import { GiBlood } from "react-icons/gi";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
-import { serverMutation } from "@/lib/core/server";
+import { createDonationRequest } from "@/lib/actions/donationRequests";
 
 export default function CreateDonationRequest() {
   const router = useRouter();
@@ -87,7 +87,7 @@ export default function CreateDonationRequest() {
 
     try {
       // Backend automatically maps default status: "pending" on creation
-      const result = await serverMutation("/api/donation-requests", formData, "POST");
+      const result = await createDonationRequest(formData);
       if (result.success) {
         toast.success("Donation request created successfully!");
         router.push("/dashboard");

@@ -5,7 +5,12 @@ import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Input 
 import { Coins, Calendar, Person, CreditCard, ShieldCheck } from "@gravity-ui/icons";
 import { toast } from "react-toastify";
 import { authClient } from "@/lib/auth-client";
-import { protectedFetch, serverMutation } from "@/lib/core/server";
+import { getFundingHistory } from "@/lib/api/fundings";
+
+import {
+    createPaymentIntent,
+    saveFunding
+} from "@/lib/actions/fundings";
 import { loadStripe } from "@stripe/stripe-js";
 
 // Initialize your system Stripe public key safely from client environment wrappers
@@ -30,8 +35,9 @@ export default function FundingManagementLedger() {
   const fetchFundingHistory = async () => {
     setLoading(true);
     try {
-      const data = await protectedFetch("/api/funding/history");
-      setFunds(data.funds || []);
+      const data = await getFundingHistory();
+
+      setFunds(data);
     } catch (err) {
       console.error(err);
       toast.error("Failed to extract systemic organization funding ledger records.");
