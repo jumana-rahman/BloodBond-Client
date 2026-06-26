@@ -20,7 +20,7 @@ export const protectedFetch = async (path) => {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      // Include any browser-side authentication tokens or credentials here if needed
+      Authorization: `Bearer ${token}`,
     },
   });
 
@@ -40,6 +40,7 @@ export const serverMutation = async (path, body = {}, method = "POST") => {
     method: method,
     headers: {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(body),
   });
