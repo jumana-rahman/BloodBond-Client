@@ -2,7 +2,7 @@
 
 import { serverMutation } from "../core/server";
 
-export const createDonationRequest = (data) => {
+export const createDonationRequest = async (data) => {
   return serverMutation(
     "/api/donation-requests",
     data,
