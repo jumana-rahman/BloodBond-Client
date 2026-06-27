@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Select, ListBox, Card, Avatar, Chip } from "@heroui/react";
 import { MagnifierPlus, MapPin, Envelope, Handset, ShieldCheck } from "@gravity-ui/icons";
 import { toast } from "react-toastify";
-import { publicFetch } from "@/lib/core/client";
+import { searchDonors } from "@/lib/api/donors";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const DISTRICTS = ["Dhaka", "Chittagong", "Sylhet", "Rajshahi", "Khulna", "Barisal", "Rangpur", "Mymensingh"];
@@ -36,8 +36,11 @@ export default function PublicDonorSearch() {
     setHasSearched(true);
 
     try {
-      const queryParams = new URLSearchParams({ bloodGroup, district, upazila }).toString();
-      const data = await publicFetch(`/api/search/donors?${queryParams}`);
+      const data = await searchDonors({
+        bloodGroup,
+        district,
+        upazila,
+      });
       setDonors(data.donors || []);
     } catch (err) {
       console.error(err);

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Card, Avatar, Chip } from "@heroui/react";
 import { At, Flame, ShieldCheck, Heart, HeartFill, Persons, MapPin, ArrowRight } from "@gravity-ui/icons";
 import { motion } from "framer-motion";
-import { publicFetch  } from "@/lib/core/client";
+import { getLandingPulse } from "@/lib/api/public";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -27,7 +27,7 @@ export default function FeaturedSection() {
   useEffect(() => {
     async function loadPulseMetrics() {
       try {
-        const data = await protectedFetch("/api/public/landing-pulse");
+        const data = await getLandingPulse();
         if (data) setPulseData(data);
       } catch (err) {
         setPulseData({

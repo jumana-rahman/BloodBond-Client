@@ -1,5 +1,16 @@
-import { protectedFetch } from "../core/server";
+import { publicFetch, protectedFetch } from "../core/server";
 
+// Public donation requests
+export const getPublicDonationRequests = async () => {
+  return publicFetch("/api/donation-requests");
+};
+
+// Public single request
+export const getDonationRequest = async (id) => {
+  return publicFetch(`/api/donation-requests/${id}`);
+};
+
+// Logged in user's requests
 export const getMyDonationRequests = async (
   page = 1,
   limit = 5,
@@ -14,6 +25,6 @@ export const getMyDonationRequests = async (
   return protectedFetch(url);
 };
 
-export const getDonationRequest = async (id) => {
+export const getDonationRequestDetails = async (id) => {
   return protectedFetch(`/api/donation-requests/${id}`);
 };

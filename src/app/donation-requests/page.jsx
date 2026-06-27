@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Chip, Card, CardBody } from "@heroui/react";
 import { Clock, Calendar, Person, MapPin, Eye } from "@gravity-ui/icons";
 import { toast } from "react-toastify";
-import { protectedFetch } from "@/lib/core/server";
+import { getPublicDonationRequests } from "@/lib/api/donationRequests";
 
 export default function PublicDonationRequests() {
   const [requests, setRequests] = useState([]);
@@ -19,8 +19,8 @@ export default function PublicDonationRequests() {
     setLoading(true);
     try {
       // Fetch only the pending cross-network blood requests
-      const data = await protectedFetch("/api/public-donation-requests?status=pending");
-      setRequests(data.requests || []);
+      const data = await getPublicDonationRequests();
+      setRequests(data || []);
     } catch (err) {
       console.error(err);
       toast.error("Failed to sync system pending request matrices.");

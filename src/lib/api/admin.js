@@ -23,3 +23,7 @@ export const getAllUsers = async (status = "") => {
 
   return protectedFetch(path);
 };
+
+export const getDashboardStats = async () => {
+  return protectedFetch("/api/admin/stats");
+};

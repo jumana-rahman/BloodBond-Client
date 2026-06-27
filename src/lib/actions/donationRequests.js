@@ -10,6 +10,17 @@ export const createDonationRequest = (data) => {
   );
 };
 
+export const confirmDonation = async (id, donorInfo) => {
+  return serverMutation(
+    `/api/donation-requests/${id}/status`,
+    {
+      status: "inprogress",
+      donorInfo,
+    },
+    "PATCH"
+  );
+};
+
 export const updateDonationRequestStatus = async (
   id,
   status,

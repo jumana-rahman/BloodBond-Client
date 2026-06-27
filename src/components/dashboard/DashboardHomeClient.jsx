@@ -5,7 +5,12 @@ import Link from "next/link";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Chip } from "@heroui/react";
 import { TrashBin, Pencil, Person, FileText, CreditCard } from "@gravity-ui/icons";
 import { toast } from "react-toastify";
-import { protectedFetch, serverMutation } from "@/lib/core/client"; 
+import { getDashboardStats } from "@/lib/api/admin";
+import { getMyDonationRequests } from "@/lib/api/donationRequests";
+import {
+  deleteDonationRequest,
+  updateDonationRequestStatus,
+} from "@/lib/actions/donationRequests"; 
 
 export default function DashboardHomeClient({ initialUser }) {
   const userRole = initialUser?.role || "donor";
@@ -24,10 +29,10 @@ export default function DashboardHomeClient({ initialUser }) {
     try {
       setLoading(true);
       if (userRole === "donor") {
-        const data = await protectedFetch("/api/my-donation-requests?limit=3&page=1");
+        const data = await getMyDonationRequests(1, 3);
         setRequests(data?.requests || []);
       } else {
-        const statData = await protectedFetch("/api/admin-volunteer/stats");
+        const statData = await getDashboardStats();
         if (statData) setStats(statData);
       }
     } catch (err) {
@@ -47,7 +52,7 @@ export default function DashboardHomeClient({ initialUser }) {
   const handleUpdateStatus = async (id, targetStatus) => {
     setActionLoading(true);
     try {
-      await serverMutation(`/api/donation-requests/${id}/status`, { status: targetStatus }, "PATCH");
+      await updateDonationRequestStatus(id, targetStatus);
       toast.success(`Request status updated to ${targetStatus}`);
       await loadDashboardData(); // Refresh logs
     } catch (err) {
@@ -61,7 +66,7 @@ export default function DashboardHomeClient({ initialUser }) {
     if (!deleteTargetId) return;
     setActionLoading(true);
     try {
-      await serverMutation(`/api/donation-requests/${deleteTargetId}`, {}, "DELETE");
+      await deleteDonationRequest(deleteTargetId);
       toast.success("Query purged from registry workflows successfully.");
       setDeleteTargetId(null);
       await loadDashboardData(); // Refresh logs

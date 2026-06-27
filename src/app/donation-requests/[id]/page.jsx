@@ -6,7 +6,8 @@ import { Chip, Card, CardBody, Input } from "@heroui/react";
 import { ArrowLeft, Calendar, Clock, MapPin, Person, Heart, FileText, Mail } from "@gravity-ui/icons";
 import { toast } from "react-toastify";
 import { authClient } from "@/lib/auth-client";
-import { protectedFetch, serverMutation } from "@/lib/core/server";
+import { getDonationRequestDetails } from "@/lib/api/donationRequests";
+import { confirmDonation } from "@/lib/actions/donationRequests";
 
 export default function PrivateDonationRequestDetails({ params }) {
   const unwrappedParams = use(params);
@@ -34,8 +35,8 @@ export default function PrivateDonationRequestDetails({ params }) {
   const fetchRequestDetails = async () => {
     setLoading(true);
     try {
-      const data = await protectedFetch(`/api/donation-requests/${unwrappedParams.id}`);
-      setRequest(data.request);
+      const data = await getDonationRequestDetails(unwrappedParams.id);
+      setRequest(data);
     } catch (err) {
       console.error(err);
       toast.error("Failed to extract target requisition metadata matrix details.");
@@ -47,18 +48,21 @@ export default function PrivateDonationRequestDetails({ params }) {
   const handleConfirmDonation = async (e) => {
     e.preventDefault();
     setActionLoading(true);
+
     try {
-      // Fires the server allocation protocol to move the request from pending to inprogress
-      await serverMutation(`/api/donation-requests/${unwrappedParams.id}/accept`, {
-        donorName: session?.user?.name,
-        donorEmail: session?.user?.email
-      }, "POST");
-      
-      toast.success("Donation confirmed successfully! Requisition changed to In Progress.");
+      await confirmDonation(unwrappedParams.id, {
+        name: session.user.name,
+        email: session.user.email,
+      });
+
+      toast.success("Donation confirmed successfully.");
+
       setIsModalOpen(false);
+
       router.push("/dashboard/my-donation-requests");
     } catch (err) {
-      toast.error("Donation allocation protocol rejected by server clusters.");
+      console.error(err);
+      toast.error("Failed to confirm donation.");
     } finally {
       setActionLoading(false);
     }
@@ -144,7 +148,7 @@ export default function PrivateDonationRequestDetails({ params }) {
                 <FileText className="w-3.5 h-3.5" /> Requisition Context Notes
               </span>
               <p className="text-sm text-gray-500 font-medium leading-relaxed bg-gray-50 rounded-2xl p-4 border border-gray-100">
-                {request.explanationMessage || "No explanatory documentation provided with this tracking ledger instance."}
+                {request.requestMessage || "No explanatory documentation provided with this tracking ledger instance."}
               </p>
             </div>
 
