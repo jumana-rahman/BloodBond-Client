@@ -1,30 +1,37 @@
-import { headers } from "next/headers"
-import { auth } from "../auth"
+import { headers } from "next/headers";
+import { auth } from "../auth";
 import { redirect } from "next/navigation";
 
-
 export const getUserSession = async () => {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    })
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
-    return session?.user || null;
-}
+  return session?.user || null;
+};
 
 export const getUserToken = async () => {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    })
-    return session?.session?.token || null;
-}
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
-export const requireRole = async (role) => {
-    const user = await getUserSession();
-    if (!user) {
-        redirect('/login');
-    }
-    if(user?.role !== role){
-        redirect('/unauthorized');
-    }
-    return user;
-}
+  return session?.session?.token || null;
+};
+
+export const requireRole = async (allowedRoles) => {
+  const user = await getUserSession();
+
+  if (!user) {
+    redirect("/auth/signin");
+  }
+
+  const rolesArray = Array.isArray(allowedRoles)
+    ? allowedRoles
+    : [allowedRoles];
+
+  if (!rolesArray.includes(user?.role)) {
+    redirect("/unauthorized");
+  }
+
+  return user;
+};
